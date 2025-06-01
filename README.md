@@ -1,0 +1,2 @@
+# talentoTech
+Curso python basico
