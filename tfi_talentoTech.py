@@ -37,7 +37,7 @@ while True:
 
     match opcion:
         case 1:
-            print ("-- AGREGAR PRODUCTO--")
+            print ("\nAGREGAR PRODUCTO")
             nombre = input("Nombre:").upper().strip()
             categoria = input("Categoria:").upper().strip()
             while True:
@@ -54,13 +54,30 @@ while True:
             productos.append([nombre,categoria,precio])
 
         case 2:
-            print ("VISUALIZAR PRODUCTOS")
+            print ("\nVISUALIZAR PRODUCTOS")
             print(f"{'No.':<5} | {'NOMBRE':<20} | {'CATEGORÍA':<15} | {'PRECIO':>10}")
             print("-" * 60)
             for i in range(len(productos)):
                 print(f"\033[36m{i+1:<5}\033[0m | {productos[i][0]:<20} | {productos[i][1]:<15} | ${productos[i][2]:>10}")
         case 3:
-            print ("BUSCAR PRODUCTO")
+            print ("\nBUSCAR PRODUCTO")
+            producto_buscado = input("ingrese el nombre del producto a buscar:").upper().strip()
+            resultados = []
+
+            for producto in productos:
+                if producto_buscado == producto[0]: #BUSQUEDA EXACTA --- SI QUIERO BUSQUEDA PARCIAL, USAR "in"
+                    resultados.append(producto)
+
+            if resultados:
+                print("\nResultado de busqueda:")
+                print(f"{'NOMBRE':<20} | {'CATEGORÍA':<15} | {'PRECIO':>10}")
+                print("-" * 50)
+                for producto in resultados:
+                    print(f"{producto[0]:<20} | {producto[1]:<15} | ${producto[2]:>10}")
+                resultados.clear()
+            else:
+                print("\033[31mNO SE ENCONTRARON RESULTADOS\033[0m")
+
         case 4:
             print ("ELIMINAR PRODUCTO")
         case 5:
