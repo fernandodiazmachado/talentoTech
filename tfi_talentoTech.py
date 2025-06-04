@@ -37,9 +37,28 @@ while True:
 
     match opcion:
         case 1:
-            print ("AGREGAR PRODUCTO")
+            print ("-- AGREGAR PRODUCTO--")
+            nombre = input("Nombre:").upper().strip()
+            categoria = input("Categoria:").upper().strip()
+            while True:
+                try:
+                    precio = int(input("Precio (sin centavos): "))  # Fuerza entrada como entero
+                    if precio <= 0:
+                        print("\033[31mEl precio debe ser mayor a 0.\033[0m")
+                    else:
+                        break
+                except ValueError:
+                    print("\033[31mError: Debe ingresar un número entero válido.\033[0m")
+            
+
+            productos.append([nombre,categoria,precio])
+
         case 2:
             print ("VISUALIZAR PRODUCTOS")
+            print(f"{'No.':<5} | {'NOMBRE':<20} | {'CATEGORÍA':<15} | {'PRECIO':>10}")
+            print("-" * 60)
+            for i in range(len(productos)):
+                print(f"\033[36m{i+1:<5}\033[0m | {productos[i][0]:<20} | {productos[i][1]:<15} | ${productos[i][2]:>10}")
         case 3:
             print ("BUSCAR PRODUCTO")
         case 4:
