@@ -15,7 +15,7 @@ CONDICIONES
     * Sistema continúa funcionando hasta opción SALIR
 '''
 #Titulo del programa
-print("\033[33mSistema de Gestión Básica De Productos\033[0m")
+print("\033[33m\nSistema de Gestión Básica De Productos\033[0m")
 
 #Creo lista de productos
 productos = []
@@ -51,7 +51,7 @@ while True:
                     print("\033[31mError: Debe ingresar un número entero válido.\033[0m")
             
 
-            productos.append([nombre,categoria,precio])
+            productos.append([nombre,categoria,precio]) #TODO ACÁ DEBERÍA GUARDAR TAMBIEN EL LARGO DE LA LISTA PARA TENER EL IDX [len(productos)+1, nombre, apellido,...] PARA FACILITAR LA ELIMINACION POR INDICE
 
         case 2:
             print ("\nVISUALIZAR PRODUCTOS")
@@ -70,16 +70,30 @@ while True:
 
             if resultados:
                 print("\nResultado de busqueda:")
-                print(f"{'NOMBRE':<20} | {'CATEGORÍA':<15} | {'PRECIO':>10}")
-                print("-" * 50)
+                print(f"{'No.':<5} | {'NOMBRE':<20} | {'CATEGORÍA':<15} | {'PRECIO':>10}")
+                print("-" * 60)
                 for producto in resultados:
-                    print(f"{producto[0]:<20} | {producto[1]:<15} | ${producto[2]:>10}")
-                resultados.clear()
+                    idx = productos.index(producto)+1
+                    print(f"{idx:<5} | {producto[0]:<20} | {producto[1]:<15} | ${producto[2]:>10}")
+                
             else:
                 print("\033[31mNO SE ENCONTRARON RESULTADOS\033[0m")
 
         case 4:
-            print ("ELIMINAR PRODUCTO")
+            print ("\nELIMINAR PRODUCTO")
+
+            try:
+                idx_eliminar = int(input("\nIngrese el N° de producto a eliminar: ")) - 1  # Resto 1 para convertir a índice interno
+                
+                if 0 <= idx_eliminar < len(productos):
+                    producto_eliminado = productos.pop(idx_eliminar)
+                    print(f"\033[32mProducto eliminado: {producto_eliminado[0]}\033[0m")
+                else:
+                    print("\033[31mError: Número fuera de rango. Ingrese un número de la lista.\033[0m")
+    
+            except ValueError:
+                print("\033[31mError: Debe ingresar un número válido.\033[0m")
+
         case 5:
             print ("\033[33mSaliendo del sistema\033[0m")
             break
