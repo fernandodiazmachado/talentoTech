@@ -60,32 +60,15 @@ def menu():
             case 4:
                 eliminar_producto()
             case 5:
-                print ("\nBUSCAR PRODUCTO")
-                producto_buscado = input("ingrese el nombre del producto a buscar:").upper().strip()
-                resultados = []
-
-                for producto in productos:
-                    if producto_buscado == producto[0]: #BUSQUEDA EXACTA --- SI QUIERO BUSQUEDA PARCIAL, USAR "in"
-                        resultados.append(producto)
-
-                if resultados:
-                    print("\nResultado de busqueda:")
-                    print(f"{'No.':<5} | {'NOMBRE':<20} | {'CATEGORÍA':<15} | {'PRECIO':>10}")
-                    print("-" * 60)
-                    for producto in resultados:
-                        idx = productos.index(producto)+1
-                        print(f"{idx:<5} | {producto[0]:<20} | {producto[1]:<15} | ${producto[2]:>10}")
-                    
-                else:
-                    print("\033[31mNO SE ENCONTRARON RESULTADOS\033[0m")
+                buscar_producto()
             case 6:
-                print("Control de stock")
-
+                control_stock()
             case 7:
-                print ("\033[33mSaliendo del sistema\033[0m")
+                print (f"{Fore.BLUE}Saliendo del sistema{Fore.RESET}")
                 break
             case _:
-                print (Fore.RED + "Error de selección en Menú!" + Fore.RESET) #Algún error no tenido en cuenta
+                print (Fore.RED + "Error: Error en selección en Menú!" + Fore.RESET) #Algún error no tenido en cuenta
+
 def obtener_campos():
     return {
         1: {"nombre":"Nombre","tipo":str,"obligatorio":True},
@@ -94,6 +77,31 @@ def obtener_campos():
         4: {"nombre":"Precio","tipo":float,"obligatorio":True},
         5: {"nombre":"Categoria","tipo":str,"obligatorio":False}
     }
+
+def imprimir_tabla(productos):
+    # Cabecera de tabla ajustada
+    print(f"{Fore.CYAN}"
+          f"{'ID':<5} "
+          f"{'Nombre':<20} "
+          f"{'Descripcion':<30} "
+          f"{'Cantidad':>8} "
+          f"{'Precio':>10} "
+          f"{'Categoría':<20} "
+          f"{Fore.RESET}")
+    print("-" * 88)  # Línea separadora
+
+    for producto in productos:
+        # Limitar la descripción a 25 caracteres para evitar desbordamiento
+        descripcion = (producto[2][:25] + '...') if len(producto[2]) > 25 else producto[2]
+        
+        print(
+            f"{producto[0]:<5} "          # ID
+            f"{producto[1]:<20} "         # Nombre
+            f"{descripcion:<30} "         # Descripción (recortada si es muy larga)
+            f"{producto[3]:>8} "          # Cantidad
+            f"{Fore.GREEN}${producto[4]:>9.2f}{Fore.RESET}"  # Precio
+            f" {producto[5]:<20} "         # Categoría
+        )
 
 def registrar_producto():
     print(f"{Fore.CYAN}\n--- AGREGAR PRODUCTO ---{Fore.RESET} ({Fore.RED}*{Fore.RESET} significa campo obligatorio)")
@@ -183,29 +191,7 @@ def ver_productos():
         print(f"{Fore.YELLOW}No hay productos registrados.{Fore.RESET}")
         return
     
-    # Cabecera de tabla ajustada
-    print(f"{Fore.CYAN}"
-          f"{'ID':<5} "
-          f"{'Nombre':<20} "
-          f"{'Descripcion':<30} "
-          f"{'Cantidad':>8} "
-          f"{'Precio':>10} "
-          f"{'Categoría':<20} "
-          f"{Fore.RESET}")
-    print("-" * 88)  # Línea separadora
-
-    for producto in productos:
-        # Limitar la descripción a 25 caracteres para evitar desbordamiento
-        descripcion = (producto[2][:25] + '...') if len(producto[2]) > 25 else producto[2]
-        
-        print(
-            f"{producto[0]:<5} "          # ID
-            f"{producto[1]:<20} "         # Nombre
-            f"{descripcion:<30} "         # Descripción (recortada si es muy larga)
-            f"{producto[3]:>8} "          # Cantidad
-            f"{Fore.GREEN}${producto[4]:>9.2f}{Fore.RESET}"  # Precio
-            f" {producto[5]:<20} "         # Categoría
-        )
+    imprimir_tabla(productos)
 
 def actualizar_productos():
     campos = obtener_campos()
@@ -280,7 +266,42 @@ def eliminar_producto():
     except ValueError:
         print(f"{Fore.RED}Error: Debe ingresar un número válido.{Fore.RESET}")
 
+def control_stock():
+    print("Ingrese el limite CANTIDAD a consultar")
+    limite = ingreso_numero("Limite",True,int,True)
+    cursor.execute('''
+                    SELECT * FROM productos WHERE cantidad < ?
+                   ''',(limite,))
+    productos = cursor.fetchall()
+    if productos:
+        print("\nProductos con bajo stock:")
+        imprimir_tabla(productos)
+    else:
+        print(f"{Fore.GREEN}Todos los productos tienen suficiente Stock{Fore.RESET}")
 
+def buscar_producto():
+    print (f"{Fore.GREEN}\nBUSCAR PRODUCTO{Fore.RESET}")
+
+    ver_productos()
+    try:
+        id_producto = int(input(f"{Fore.RED}Ingrese el ID del producto a Buscar:{Fore.RESET}")) #TODO FALTA VALIDAR ID_VALIDO
+        
+        # Verificar si el ID existe
+        cursor.execute("SELECT id FROM productos WHERE id = ?", (id_producto,))
+        if not cursor.fetchone():
+            print(Fore.YELLOW + f"Error: No existe un producto con ID {id_producto}" + Fore.RESET)
+            return None
+        cursor.execute("SELECT * FROM productos WHERE id = ?",(id_producto,))
+        resultados = cursor.fetchall()
+
+        if resultados:
+            imprimir_tabla(resultados)
+        else:
+            print("No se encontraron productos")
+    except ValueError:
+        print("Error: Debe ingresar un numero valido")
+
+   
 
 if __name__ == "__main__":
     menu()
