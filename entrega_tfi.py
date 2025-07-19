@@ -24,9 +24,6 @@ CREATE TABLE IF NOT EXISTS productos(
 
 conexion.commit()
 
-#Creo lista de productos
-productos = []
-
 #Inicio de MENÚ
 def menu():
     while True:
