@@ -54,12 +54,24 @@ def menu():
             case 1:
                 registrar_producto()
             case 2:
-                print ("\nVISUALIZAR PRODUCTOS")
-                print(f"{'No.':<5} | {'NOMBRE':<20} | {'CATEGORÍA':<15} | {'PRECIO':>10}")
-                print("-" * 60)
-                for i in range(len(productos)):
-                    print(f"\033[36m{i+1:<5}\033[0m | {productos[i][0]:<20} | {productos[i][1]:<15} | ${productos[i][2]:>10}")
+                ver_productos()
             case 3:
+                actualizar_productos()       
+            case 4:
+                print ("\nELIMINAR PRODUCTO")
+
+                try:
+                    idx_eliminar = int(input("\nIngrese el N° de producto a eliminar: ")) - 1  # Resto 1 para convertir a índice interno
+                    
+                    if 0 <= idx_eliminar < len(productos):
+                        producto_eliminado = productos.pop(idx_eliminar)
+                        print(f"\033[32mProducto eliminado: {producto_eliminado[0]}\033[0m")
+                    else:
+                        print("\033[31mEr5ror: Número fuera de rango. Ingrese un número de la lista.\033[0m")
+        
+                except ValueError:
+                    print("\033[31mError: Debe ingresar un número válido.\033[0m")
+            case 5:
                 print ("\nBUSCAR PRODUCTO")
                 producto_buscado = input("ingrese el nombre del producto a buscar:").upper().strip()
                 resultados = []
@@ -78,23 +90,10 @@ def menu():
                     
                 else:
                     print("\033[31mNO SE ENCONTRARON RESULTADOS\033[0m")
+            case 6:
+                print("Control de stock")
 
-            case 4:
-                print ("\nELIMINAR PRODUCTO")
-
-                try:
-                    idx_eliminar = int(input("\nIngrese el N° de producto a eliminar: ")) - 1  # Resto 1 para convertir a índice interno
-                    
-                    if 0 <= idx_eliminar < len(productos):
-                        producto_eliminado = productos.pop(idx_eliminar)
-                        print(f"\033[32mProducto eliminado: {producto_eliminado[0]}\033[0m")
-                    else:
-                        print("\033[31mEr5ror: Número fuera de rango. Ingrese un número de la lista.\033[0m")
-        
-                except ValueError:
-                    print("\033[31mError: Debe ingresar un número válido.\033[0m")
-
-            case 5:
+            case 7:
                 print ("\033[33mSaliendo del sistema\033[0m")
                 break
             case _:
@@ -177,6 +176,105 @@ def ingreso_numero(parametro, obligatorio=True, tipo_dato=float, positivo=True):
         except ValueError:
             tipo_esperado = "entero" if tipo_dato == int else "numérico"
             print(Fore.RED + f"Error: Debe ingresar un valor {tipo_esperado} válido" + Fore.RESET)
+
+def ver_productos():
+    print (f"\n {Fore.GREEN}VISUALIZAR PRODUCTOS{Fore.RESET}")
+    cursor.execute('''
+                    SELECT * FROM productos
+                    ''')
+    productos = cursor.fetchall()
+
+    # Verificar si hay productos antes de mostrar
+    if not productos:
+        print(f"{Fore.YELLOW}No hay productos registrados.{Fore.RESET}")
+        return
+    
+    # Cabecera de tabla ajustada
+    print(f"{Fore.CYAN}"
+          f"{'ID':<5} "
+          f"{'Nombre':<20} "
+          f"{'Descripcion':<30} "
+          f"{'Cantidad':>8} "
+          f"{'Precio':>10} "
+          f"{'Categoría':<20} "
+          f"{Fore.RESET}")
+    print("-" * 88)  # Línea separadora
+
+    for producto in productos:
+        # Limitar la descripción a 25 caracteres para evitar desbordamiento
+        descripcion = (producto[2][:25] + '...') if len(producto[2]) > 25 else producto[2]
+        
+        print(
+            f"{producto[0]:<5} "          # ID
+            f"{producto[1]:<20} "         # Nombre
+            f"{descripcion:<30} "         # Descripción (recortada si es muy larga)
+            f"{producto[3]:>8} "          # Cantidad
+            f"{Fore.GREEN}${producto[4]:>9.2f}{Fore.RESET}"  # Precio
+            f" {producto[5]:<20} "         # Categoría
+        )
+
+def actualizar_productos():
+    campos = {
+        1: {"nombre":"Nombre","tipo":str,"obligatorio":True},
+        2: {"nombre":"Descripcion","tipo":str,"obligatorio":False},
+        3: {"nombre":"Cantidad","tipo":int,"obligatorio":True},
+        4: {"nombre":"Precio","tipo":float,"obligatorio":True},
+        5: {"nombre":"Categoria","tipo":str,"obligatorio":False}
+    }
+    ver_productos()
+    id_producto = int(input(f"{Fore.GREEN}Ingrese el ID del producto a actualizar:{Fore.RESET}")) #TODO FALTA VALIDAR ID_VALIDO
+    campo = menu_campos(campos)
+
+    match campo["nombre"]:
+        case "Nombre":
+            nuevo_valor = ingreso_texto("Nombre",True)
+        case "Descripcion":
+            nuevo_valor = ingreso_texto("Descripcion")
+        case "Cantidad":
+            nuevo_valor = ingreso_numero("Cantidad",True,int,True)
+        case "Precio":
+            nuevo_valor = ingreso_numero("Precio",True,positivo=True)
+        case "Categoria":
+            nuevo_valor = ingreso_texto("Categoria")
+    
+    cursor.execute(f'''
+                    UPDATE productos SET {campo["nombre"]} = ? WHERE id = ?
+                   ''',(nuevo_valor,id_producto))
+
+    conexion.commit()
+    print(f"{campo['nombre']} actualizado correctamente")
+
+
+
+def menu_campos(campos):
+    """
+    Muestra menú de campos y retorna el campo seleccionado con toda su configuración
+    
+    Args:
+        campos (dict): Diccionario con la estructura {num: {config_campo}}
+        
+    Returns:
+        dict: Diccionario con la configuración completa del campo seleccionado
+    """
+    while True:
+        # Menú dinámico con indicador de campos obligatorios
+        print(f"\n{Fore.CYAN}Seleccione campo a modificar:{Fore.RESET}")
+        for num, config in campos.items():
+            obligatorio = Fore.RED + "*" + Fore.RESET if config["obligatorio"] else ""
+            print(f"{num}. {config['nombre']} {obligatorio}")
+
+        # Validación de entrada
+        try:
+            opcion = int(input(Fore.BLUE + "\nOpción: " + Fore.RESET))
+            if opcion in campos:
+                return campos[opcion]  # Retorna toda la configuración del campo
+            print(Fore.RED + f"Error: Debe ser entre 1 y {len(campos)}" + Fore.RESET)
+        except ValueError:
+            print(Fore.RED + "Error: Ingrese un número válido" + Fore.RESET)
+
+
+
+
 
 if __name__ == "__main__":
     menu()
