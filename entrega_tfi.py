@@ -58,19 +58,7 @@ def menu():
             case 3:
                 actualizar_productos()       
             case 4:
-                print ("\nELIMINAR PRODUCTO")
-
-                try:
-                    idx_eliminar = int(input("\nIngrese el N° de producto a eliminar: ")) - 1  # Resto 1 para convertir a índice interno
-                    
-                    if 0 <= idx_eliminar < len(productos):
-                        producto_eliminado = productos.pop(idx_eliminar)
-                        print(f"\033[32mProducto eliminado: {producto_eliminado[0]}\033[0m")
-                    else:
-                        print("\033[31mEr5ror: Número fuera de rango. Ingrese un número de la lista.\033[0m")
-        
-                except ValueError:
-                    print("\033[31mError: Debe ingresar un número válido.\033[0m")
+                eliminar_producto()
             case 5:
                 print ("\nBUSCAR PRODUCTO")
                 producto_buscado = input("ingrese el nombre del producto a buscar:").upper().strip()
@@ -98,7 +86,14 @@ def menu():
                 break
             case _:
                 print (Fore.RED + "Error de selección en Menú!" + Fore.RESET) #Algún error no tenido en cuenta
-
+def obtener_campos():
+    return {
+        1: {"nombre":"Nombre","tipo":str,"obligatorio":True},
+        2: {"nombre":"Descripcion","tipo":str,"obligatorio":False},
+        3: {"nombre":"Cantidad","tipo":int,"obligatorio":True},
+        4: {"nombre":"Precio","tipo":float,"obligatorio":True},
+        5: {"nombre":"Categoria","tipo":str,"obligatorio":False}
+    }
 
 def registrar_producto():
     print(f"{Fore.CYAN}\n--- AGREGAR PRODUCTO ---{Fore.RESET} ({Fore.RED}*{Fore.RESET} significa campo obligatorio)")
@@ -118,7 +113,6 @@ def registrar_producto():
         print("Error al insertar producto")
 
     productos.append([nombre,categoria,precio]) #TODO ACÁ DEBERÍA GUARDAR TAMBIEN EL LARGO DE LA LISTA PARA TENER EL IDX [len(productos)+1, nombre, apellido,...] PARA FACILITAR LA ELIMINACION POR INDICE
-
 
 def ingreso_texto(parametro, obligatorio=False):
     """
@@ -214,13 +208,7 @@ def ver_productos():
         )
 
 def actualizar_productos():
-    campos = {
-        1: {"nombre":"Nombre","tipo":str,"obligatorio":True},
-        2: {"nombre":"Descripcion","tipo":str,"obligatorio":False},
-        3: {"nombre":"Cantidad","tipo":int,"obligatorio":True},
-        4: {"nombre":"Precio","tipo":float,"obligatorio":True},
-        5: {"nombre":"Categoria","tipo":str,"obligatorio":False}
-    }
+    campos = obtener_campos()
     ver_productos()
     id_producto = int(input(f"{Fore.GREEN}Ingrese el ID del producto a actualizar:{Fore.RESET}")) #TODO FALTA VALIDAR ID_VALIDO
     campo = menu_campos(campos)
@@ -243,8 +231,6 @@ def actualizar_productos():
 
     conexion.commit()
     print(f"{campo['nombre']} actualizado correctamente")
-
-
 
 def menu_campos(campos):
     """
@@ -272,7 +258,27 @@ def menu_campos(campos):
         except ValueError:
             print(Fore.RED + "Error: Ingrese un número válido" + Fore.RESET)
 
-
+def eliminar_producto():
+    print (f"\n{Fore.RED}ELIMINAR PRODUCTO{Fore.RESET}")
+    ver_productos()
+    try:
+        id_producto = int(input(f"{Fore.RED}Ingrese el ID del producto a Eliminar:{Fore.RESET}")) #TODO FALTA VALIDAR ID_VALIDO
+        
+        # Verificar si el ID existe
+        cursor.execute("SELECT id FROM productos WHERE id = ?", (id_producto,))
+        if not cursor.fetchone():
+            print(Fore.YELLOW + f"Error: No existe un producto con ID {id_producto}" + Fore.RESET)
+            return None
+        # Confirmar eliminación
+        print(f"\n{Fore.RED}¡ATENCIÓN!{Fore.RESET}")
+        print(f"Está por eliminar el producto ID: {Fore.RED}{id_producto}{Fore.RESET}")
+        confirmacion = input(f"{Fore.RED}¿Está seguro? (S/N): {Fore.RESET}").upper()
+        
+        if confirmacion == 'S':
+            cursor.execute("DELETE FROM productos WHERE id = ?", (id_producto,))
+            conexion.commit()
+    except ValueError:
+        print(f"{Fore.RED}Error: Debe ingresar un número válido.{Fore.RESET}")
 
 
 
